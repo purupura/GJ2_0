@@ -11,6 +11,13 @@
 //ブロックの数
 const int blockMax = 32;
 
+struct Corners {
+	Vector2 leftTop;
+	Vector2 rightTop;
+	Vector2 leftDown;
+	Vector2 rightDown;
+};
+
 struct Player {
 	Vector2 pos;
 	Vector2 velocity;
@@ -22,6 +29,8 @@ struct Player {
 	float speed;
 	unsigned int color;
 };
+
+
 
 //ブロックの種類を列挙
 enum BlockType {
@@ -38,12 +47,48 @@ struct Block {
 	int digCounter[blockMax];
 	bool isBroken[blockMax];
 	unsigned int color[blockMax];
+	Corners corners[blockMax];
 };
 
-void DrawBox(Vector2 pos, float widgh, float height,unsigned int color) {
+
+
+void DrawBox(Vector2 pos, float widgh, float height, unsigned int color) {
 	Novice::DrawBox(int(pos.x), int(pos.y), int(widgh), int(height), 0.0f, color, kFillModeSolid);
 }
 
+Corners PosUpdate(Vector2 a, float width, float height) {
+	Corners c = {};
+
+	c.leftTop.x = (a.x - width / 2.0f);
+	c.leftTop.y = (a.y - height / 2.0f);
+
+	c.rightTop.x = ((a.x + width / 2.0f));
+	c.rightTop.y = (a.y - height / 2.0f);
+
+	c.leftDown.x = (a.x - width / 2.0f);
+	c.leftDown.y = ((a.y + height / 2.0f));
+
+	c.rightDown.x = ((a.x + width / 2.0f));
+	c.rightDown.y = ((a.y + height / 2.0f));
+
+	return c;
+}
+
+int HitBox(Corners a, Corners b) {
+	if (b.leftTop.x <= a.rightTop.x && a.leftTop.x < b.rightTop.x) {
+		if (b.leftTop.y <= a.rightDown.y && a.leftTop.y < b.rightDown.y) {
+			return 1;
+		} else {
+			return 0;
+		}
+	} else {
+		return 0;
+	}
+}
+
+void DrawQuad(Corners a, int imageGH, int imageWidth, int imageHeight, unsigned int color) {
+	Novice::DrawQuad(int(a.leftTop.x), int(a.leftTop.y), int(a.rightTop.x), int(a.rightTop.y), int(a.leftDown.x), int(a.leftDown.y), int(a.rightDown.x), int(a.rightDown.y), 0, 0, imageWidth, imageHeight, imageGH, color);
+}
 
 const char kWindowTitle[] = "2604_";
 
@@ -56,12 +101,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// キー入力結果を受け取る箱
 	char keys[256] = { 0 };
 	char preKeys[256] = { 0 };
-	
+
 	float scroll = 0;
 
 	//自機の宣言
 	Player player = {
-		  {500.0f, 310.0f},
+		  {200.0f, 360.0f},
 		  {0.0f,20.0f},
 		  {-0.8f,-0.8f},
 		   100.0f,
@@ -69,10 +114,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		   5.0f,
 		   5.0f,
 		   5.0f,
-		   WHITE
+		   0xffdab9ff
 	};
 
-
+	//プレイヤーの位置と半径から四角を計算
+	Corners playerCorners = PosUpdate(player.pos, player.radiusW, player.radiusH);
 
 	//ゲームシーンの切り替え
 	enum GameScene {
@@ -89,11 +135,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	unsigned int currentTime = unsigned int(time(nullptr));
 	srand(currentTime);
 
-
+	int whiteGH = Novice::LoadTexture("white1x1.png");
 
 	Block block;
 	block.widgh = 100.0f;
 	block.height = 500.0f;
+
 
 	for (int i = 0;i < blockMax;i++) {
 		//乱数でブロックの番号を決める
@@ -101,7 +148,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		block.pos[i] = { 500.0f + (i * block.widgh),110.0f };
 
-		if (blockNum[i] == 0||blockNum[i] == 1|| blockNum[i] == 2|| blockNum[i] == 3 || blockNum[i] == 4 || blockNum[i] == 5) {
+		block.corners[i] = PosUpdate(block.pos[i], block.widgh, block.height);
+
+		if (blockNum[i] == 0 || blockNum[i] == 1 || blockNum[i] == 2 || blockNum[i] == 3 || blockNum[i] == 4 || blockNum[i] == 5) {
 			block.blockType[i] = normal;
 			block.color[i] = WHITE;
 		} else if (blockNum[i] == 6 || blockNum[i] == 7 || blockNum[i] == 8) {
@@ -112,11 +161,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			block.color[i] = RED;
 		}
 
-		
+		block.isBroken[i] = false;
+		block.digCounter[i] = 0;
+
+
 
 	}
 
-	
+
 	/*int time;*/
 
 	// ウィンドウの×ボタンが押されるまでループ
@@ -139,7 +191,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			//タイトル描画処理
 
 			ImGui::Begin("Window");
-			ImGui::Text("blockNum:%d,%d,%d,%d,%d", blockNum[0], blockNum[1], blockNum[2], blockNum[3], blockNum[4]);
+			ImGui::Text("blockNum:%d,%d,%d,%d,%d",
+				blockNum[0], blockNum[1], blockNum[2], blockNum[3], blockNum[4]);
 			ImGui::End();
 
 			//タイトル描画処理ここまで
@@ -154,31 +207,60 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			}
 
 
-			if (keys[DIK_RIGHT] && !preKeys[DIK_RIGHT]) {
-				scroll++;
+			/*if (keys[DIK_RIGHT] && !preKeys[DIK_RIGHT]) {
+				scroll = 5.0f;
 			} else if (keys[DIK_LEFT] && !preKeys[DIK_LEFT]) {
-				scroll--;
-			}
-        
-        	if (keys[DIK_A]) {
-				player.pos.x -= player.speed;
+				scroll = -5.0f;
+			}*/
+
+			//プレイヤーの位置と半径から四角を計算
+			playerCorners = PosUpdate(player.pos, player.radiusW * 2.0f, player.radiusH * 2.0f);
+			player.pos.x += player.speed;
+			for (int i = 0;i < blockMax;i++) {
+				//プレイヤーがブロックに当たっていたらストップする
+				if(!block.isBroken[i]){
+					if (HitBox(playerCorners, block.corners[i])) {
+						player.speed = 0.0f;
+						//当たっている状態でマウスのボタンが押されたら掘る
+						if (Novice::IsTriggerMouse(0)) {
+							block.digCounter[i]++;
+						}
+
+						if (block.digCounter[i] == 3) {
+							block.isBroken[i] = true;
+							scroll += 50;
+						}
+					}
+					break;
+				} else {
+					player.speed = 5.0f;
+				}
 			}
 
-			if (keys[DIK_D]) {
-				player.pos.x += player.speed;
+			if (player.speed == 0.0f) {
+				
 			}
+
+			
+
+
 
 			//プレイ更新処理ここまで
 
 			//プレイ描画処理
 			//
 
-			DrawBox({ 0.0f-scroll,0.0f }, 1280.0f, 110.0f, BLACK);
-			DrawBox({ 0.0f-scroll,610.0f }, 1280.0f, 110.0f, BLACK);
+			DrawBox({ 0.0f - scroll,0.0f }, 3280.0f, 110.0f, BLACK);
+			DrawBox({ 0.0f - scroll,610.0f }, 3280.0f, 110.0f, BLACK);
+			
 			for (int i = 0;i < blockMax;i++) {
-				block.pos[i].x -= scroll;
-				DrawBox(block.pos[i], block.widgh, block.height, block.color[i]);
+				if (!block.isBroken[i]) {
+					Novice::DrawBox(int(block.pos[i].x - scroll), int(block.pos[i].y), int(block.widgh), int(block.height),0.0f, block.color[i], kFillModeSolid);
+				}
 			}
+			/*Novice::DrawEllipse((int)player.pos.x, (int)player.pos.y, int(player.radiusW), int(player.radiusH), 0, player.color, kFillModeSolid);*/
+
+			DrawQuad(playerCorners, whiteGH, 1, 1, player.color);
 
 			//プレイ描画処理ここまで
 
@@ -208,9 +290,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 					block.color[i] = BLUE;
 				} else if (blockNum[i] == 9) {
 					block.blockType[i] = bomb;
-					block.color[i]=RED;
+					block.color[i] = RED;
 				}
 			}
+
+			player.pos = { 200.0f, 360.0f };
 
 			//result更新処理ここまで
 
