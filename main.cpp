@@ -10,6 +10,8 @@
 
 struct Player {
 	Vector2 pos;
+	float width;
+	float height;
 	bool isDig;
 };
 
