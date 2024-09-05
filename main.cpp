@@ -8,11 +8,25 @@
 #include"imgui.h"
 #include<time.h>
 
+
 struct Player {
 	Vector2 pos;
 	float width;
 	float height;
+	float speed;
+	//掘っているか
 	bool isDig;
+};
+
+//ブロックの種類を列挙
+enum BlockType {
+	normal,
+	bad,
+	bomb
+};
+
+struct Block {
+
 };
 
 const int blockMax = 32;
@@ -32,6 +46,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	player.pos = { 0.0f,0.0f };
 	player.isDig = false;
 
+	//ゲームシーンの切り替え
 	enum GameScene {
 		kTitle,
 		kPlay,
@@ -40,6 +55,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	GameScene gameScene = kTitle;
 
+	//ブロックに番号を振ることで乱数でブロックを生成
 	int blockNum[blockMax];
 
 	unsigned int currentTime = unsigned int(time(nullptr));
