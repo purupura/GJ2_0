@@ -1,4 +1,8 @@
 #include <Novice.h>
+#define _USE_MATH_DEFINES
+#include <cmath>
+#include <string.h>
+#include <assert.h>
 
 const char kWindowTitle[] = "LE2D_02_カラサワ_ミクム";
 
