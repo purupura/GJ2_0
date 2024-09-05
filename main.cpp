@@ -118,7 +118,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	};
 
 	//プレイヤーの位置と半径から四角を計算
-	Corners playerCorners = PosUpdate(player.pos, player.radiusW, player.radiusH);
+	Corners playerCorners = PosUpdate(player.pos, player.radiusW*2.0f, player.radiusH*2.0f);
 
 	//ゲームシーンの切り替え
 	enum GameScene {
@@ -146,7 +146,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		//乱数でブロックの番号を決める
 		blockNum[i] = rand() % 10;
 
-		block.pos[i] = { 500.0f + (i * block.widgh),110.0f };
+		block.pos[i] = { 500.0f + (i * block.widgh),360.0f };
 
 		block.corners[i] = PosUpdate(block.pos[i], block.widgh, block.height);
 
@@ -237,14 +237,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 				}
 			}
 
-			if (player.speed == 0.0f) {
-				
-			}
-
-			
-
-
-
 			//プレイ更新処理ここまで
 
 			//プレイ描画処理
@@ -255,13 +247,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			
 			for (int i = 0;i < blockMax;i++) {
 				if (!block.isBroken[i]) {
-					Novice::DrawBox(int(block.pos[i].x - scroll), int(block.pos[i].y), int(block.widgh), int(block.height),0.0f, block.color[i], kFillModeSolid);
+					/*Novice::DrawBox(int(block.pos[i].x - scroll), int(block.pos[i].y), int(block.widgh), int(block.height),0.0f, block.color[i], kFillModeSolid);*/
+					DrawQuad(block.corners[i], whiteGH, 1, 1, block.color[i]);
 				}
 			}
 			/*Novice::DrawEllipse((int)player.pos.x, (int)player.pos.y, int(player.radiusW), int(player.radiusH), 0, player.color, kFillModeSolid);*/
 
 			DrawQuad(playerCorners, whiteGH, 1, 1, player.color);
-
+			
 			//プレイ描画処理ここまで
 
 			break;
