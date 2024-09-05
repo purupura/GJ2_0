@@ -11,11 +11,14 @@
 
 struct Player {
 	Vector2 pos;
-	float width;
-	float height;
+	Vector2 velocity;
+	Vector2 acceleration;
+	float radiusW;
+	float radiusH;
+	float Lspeed;
+	float Rspeed;
 	float speed;
-	//掘っているか
-	bool isDig;
+	unsigned int color;
 };
 
 //ブロックの種類を列挙
@@ -42,9 +45,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char keys[256] = {0};
 	char preKeys[256] = {0};
 
-	Player player;
-	player.pos = { 0.0f,0.0f };
-	player.isDig = false;
+	//自機の宣言
+	Player player = {
+		  {500.0f, 310.0f},
+		  {0.0f,20.0f},
+		  {-0.8f,-0.8f},
+		   100.0f,
+		   200.0f,
+		   5.0f,
+		   5.0f,
+		   5.0f,
+		   WHITE
+	};
 
 	//ゲームシーンの切り替え
 	enum GameScene {
@@ -98,13 +110,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 				gameScene = kResult;
 			}
 
-			if (Novice::IsTriggerMouse(0)) {
-				player.isDig = true;
+			if (keys[DIK_A]) {
+				player.pos.x -= player.speed;
 			}
+
+			if (keys[DIK_D]) {
+				player.pos.x += player.speed;
+			}
+
 			//プレイ更新処理ここまで
 
 			//プレイ描画処理
-
+			Novice::DrawEllipse((int)player.pos.x, (int)player.pos.y, 10, 10, 0, player.color, kFillModeSolid);
 			Novice::DrawBox(0, 0, 1280, 720, 0.0f, RED, kFillModeSolid);
 
 			//プレイ描画処理ここまで
