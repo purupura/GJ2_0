@@ -13,11 +13,14 @@ const int blockMax = 32;
 
 struct Player {
 	Vector2 pos;
-	float width;
-	float height;
+	Vector2 velocity;
+	Vector2 acceleration;
+	float radiusW;
+	float radiusH;
+	float Lspeed;
+	float Rspeed;
 	float speed;
-	//掘っているか
-	bool isDig;
+	unsigned int color;
 };
 
 //ブロックの種類を列挙
@@ -56,9 +59,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	
 	float scroll = 0;
 
-	Player player;
-	player.pos = { 0.0f,0.0f };
-	player.isDig = false;
+	//自機の宣言
+	Player player = {
+		  {500.0f, 310.0f},
+		  {0.0f,20.0f},
+		  {-0.8f,-0.8f},
+		   100.0f,
+		   200.0f,
+		   5.0f,
+		   5.0f,
+		   5.0f,
+		   WHITE
+	};
 
 
 
@@ -141,10 +153,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 				gameScene = kResult;
 			}
 
+
 			if (keys[DIK_RIGHT] && !preKeys[DIK_RIGHT]) {
 				scroll++;
 			} else if (keys[DIK_LEFT] && !preKeys[DIK_LEFT]) {
 				scroll--;
+			}
+        
+        	if (keys[DIK_A]) {
+				player.pos.x -= player.speed;
+			}
+
+			if (keys[DIK_D]) {
+				player.pos.x += player.speed;
 			}
 
 			//プレイ更新処理ここまで
