@@ -8,6 +8,8 @@
 #include"imgui.h"
 #include<time.h>
 
+//ブロックの数
+const int blockMax = 32;
 
 struct Player {
 	Vector2 pos;
@@ -26,10 +28,20 @@ enum BlockType {
 };
 
 struct Block {
-
+	Vector2 pos[blockMax];
+	float height;
+	float widgh;
+	BlockType blockType[blockMax];
+	int digCounter[blockMax];
+	bool isBroken[blockMax];
+	unsigned int color[blockMax];
 };
 
-const int blockMax = 32;
+void DrawBox(Vector2 pos, float widgh, float height,unsigned int color) {
+	Novice::DrawBox(int(pos.x), int(pos.y), int(widgh), int(height), 0.0f, color, kFillModeSolid);
+}
+
+
 const char kWindowTitle[] = "2604_";
 
 // Windowsアプリでのエントリーポイント(main関数)
@@ -39,12 +51,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Novice::Initialize(kWindowTitle, 1280, 720);
 
 	// キー入力結果を受け取る箱
-	char keys[256] = {0};
-	char preKeys[256] = {0};
+	char keys[256] = { 0 };
+	char preKeys[256] = { 0 };
+	
+	float scroll = 0;
 
 	Player player;
 	player.pos = { 0.0f,0.0f };
 	player.isDig = false;
+
+
 
 	//ゲームシーンの切り替え
 	enum GameScene {
@@ -61,8 +77,31 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	unsigned int currentTime = unsigned int(time(nullptr));
 	srand(currentTime);
 
+
+
+	Block block;
+	block.widgh = 100.0f;
+	block.height = 500.0f;
+
 	for (int i = 0;i < blockMax;i++) {
-		blockNum[i] = rand() % 3;
+		//乱数でブロックの番号を決める
+		blockNum[i] = rand() % 10;
+
+		block.pos[i] = { 500.0f + (i * block.widgh),110.0f };
+
+		if (blockNum[i] == 0||blockNum[i] == 1|| blockNum[i] == 2|| blockNum[i] == 3 || blockNum[i] == 4 || blockNum[i] == 5) {
+			block.blockType[i] = normal;
+			block.color[i] = WHITE;
+		} else if (blockNum[i] == 6 || blockNum[i] == 7 || blockNum[i] == 8) {
+			block.blockType[i] = bad;
+			block.color[i] = BLUE;
+		} else if (blockNum[i] == 9) {
+			block.blockType[i] = bomb;
+			block.color[i] = RED;
+		}
+
+		
+
 	}
 
 	// ウィンドウの×ボタンが押されるまでループ
@@ -77,7 +116,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		switch (gameScene) {
 		case GameScene::kTitle:
 			//タイトル更新処理
-			if (keys[DIK_SPACE]&&!preKeys[DIK_SPACE]) {
+			if (keys[DIK_SPACE] && !preKeys[DIK_SPACE]) {
 				gameScene = kPlay;
 			}
 			//タイトル更新処理ここまで
@@ -98,14 +137,23 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 				gameScene = kResult;
 			}
 
-			if (Novice::IsTriggerMouse(0)) {
-				player.isDig = true;
+			if (keys[DIK_RIGHT] && !preKeys[DIK_RIGHT]) {
+				scroll++;
+			} else if (keys[DIK_LEFT] && !preKeys[DIK_LEFT]) {
+				scroll--;
 			}
+
 			//プレイ更新処理ここまで
 
 			//プレイ描画処理
+			//
 
-			Novice::DrawBox(0, 0, 1280, 720, 0.0f, RED, kFillModeSolid);
+			DrawBox({ 0.0f-scroll,0.0f }, 1280.0f, 110.0f, BLACK);
+			DrawBox({ 0.0f-scroll,610.0f }, 1280.0f, 110.0f, BLACK);
+			for (int i = 0;i < blockMax;i++) {
+				block.pos[i].x -= scroll;
+				DrawBox(block.pos[i], block.widgh, block.height, block.color[i]);
+			}
 
 			//プレイ描画処理ここまで
 
@@ -116,6 +164,27 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			if (keys[DIK_SPACE] && !preKeys[DIK_SPACE]) {
 				gameScene = kTitle;
 			}
+
+			currentTime = unsigned int(time(nullptr));
+			srand(currentTime);
+			for (int i = 0;i < blockMax;i++) {
+				//乱数でブロックの番号を決める
+				blockNum[i] = rand() % 10;
+
+				block.pos[i] = { 500.0f + (i * block.widgh),110.0f };
+
+				if (blockNum[i] == 0 || blockNum[i] == 1 || blockNum[i] == 2 || blockNum[i] == 3 || blockNum[i] == 4 || blockNum[i] == 5) {
+					block.blockType[i] = normal;
+					block.color[i] = WHITE;
+				} else if (blockNum[i] == 6 || blockNum[i] == 7 || blockNum[i] == 8) {
+					block.blockType[i] = bad;
+					block.color[i] = BLUE;
+				} else if (blockNum[i] == 9) {
+					block.blockType[i] = bomb;
+					block.color[i]=RED;
+				}
+			}
+
 			//result更新処理ここまで
 
 			//result描画処理
