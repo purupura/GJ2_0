@@ -1,10 +1,20 @@
 #include <Novice.h>
 #define _USE_MATH_DEFINES
+#include "Vector2.h"
 #include <cmath>
 #include <string.h>
 #include <assert.h>
+#include <stdlib.h>
+#include"imgui.h"
+#include<time.h>
 
-const char kWindowTitle[] = "LE2D_02_カラサワ_ミクム";
+struct Player {
+	Vector2 pos;
+	bool isDig;
+};
+
+const int blockMax = 32;
+const char kWindowTitle[] = "2604_";
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
@@ -16,6 +26,27 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char keys[256] = {0};
 	char preKeys[256] = {0};
 
+	Player player;
+	player.pos = { 0.0f,0.0f };
+	player.isDig = false;
+
+	enum GameScene {
+		kTitle,
+		kPlay,
+		kResult
+	};
+
+	GameScene gameScene = kTitle;
+
+	int blockNum[blockMax];
+
+	unsigned int currentTime = unsigned int(time(nullptr));
+	srand(currentTime);
+
+	for (int i = 0;i < blockMax;i++) {
+		blockNum[i] = rand() % 3;
+	}
+
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
@@ -25,21 +56,55 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		memcpy(preKeys, keys, 256);
 		Novice::GetHitKeyStateAll(keys);
 
-		///
-		/// ↓更新処理ここから
-		///
+		switch (gameScene) {
+		case GameScene::kTitle:
+			//タイトル更新処理
+			if (keys[DIK_SPACE]&&!preKeys[DIK_SPACE]) {
+				gameScene = kPlay;
+			}
+			//タイトル更新処理ここまで
 
-		///
-		/// ↑更新処理ここまで
-		///
+			//タイトル描画処理
 
-		///
-		/// ↓描画処理ここから
-		///
+			ImGui::Begin("Window");
+			ImGui::Text("blockNum:%d,%d,%d,%d,%d", blockNum[0], blockNum[1], blockNum[2], blockNum[3], blockNum[4]);
+			ImGui::End();
 
-		///
-		/// ↑描画処理ここまで
-		///
+			//タイトル描画処理ここまで
+
+			break;
+
+		case GameScene::kPlay:
+			//プレイ更新処理
+			if (keys[DIK_SPACE] && !preKeys[DIK_SPACE]) {
+				gameScene = kResult;
+			}
+
+			if (Novice::IsTriggerMouse(0)) {
+				player.isDig = true;
+			}
+			//プレイ更新処理ここまで
+
+			//プレイ描画処理
+
+			Novice::DrawBox(0, 0, 1280, 720, 0.0f, RED, kFillModeSolid);
+
+			//プレイ描画処理ここまで
+
+			break;
+
+		case GameScene::kResult:
+			//result更新処理
+			if (keys[DIK_SPACE] && !preKeys[DIK_SPACE]) {
+				gameScene = kTitle;
+			}
+			//result更新処理ここまで
+
+			//result描画処理
+			Novice::DrawBox(0, 0, 1280, 720, 0.0f, BLUE, kFillModeSolid);
+			//result描画処理ここまで
+
+		}
 
 		// フレームの終了
 		Novice::EndFrame();
