@@ -104,6 +104,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	}
 
+	
+	int time
+
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
@@ -132,6 +135,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			break;
 
 		case GameScene::kPlay:
+
 			//プレイ更新処理
 			if (keys[DIK_SPACE] && !preKeys[DIK_SPACE]) {
 				gameScene = kResult;
@@ -164,6 +168,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			if (keys[DIK_SPACE] && !preKeys[DIK_SPACE]) {
 				gameScene = kTitle;
 			}
+
+			scroll = 0.0f;
 
 			currentTime = unsigned int(time(nullptr));
 			srand(currentTime);
