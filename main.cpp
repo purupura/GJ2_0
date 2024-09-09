@@ -150,10 +150,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		block.corners[i] = PosUpdate(block.pos[i], block.widgh, block.height);
 
-		if (blockNum[i] == 0 || blockNum[i] == 1 || blockNum[i] == 2 || blockNum[i] == 3 || blockNum[i] == 4 || blockNum[i] == 5) {
+		//0~5が普通、6~8が罠、9が爆弾
+		if (blockNum[i] >= 0 || blockNum[i] <= 5) {
 			block.blockType[i] = normal;
 			block.color[i] = WHITE;
-		} else if (blockNum[i] == 6 || blockNum[i] == 7 || blockNum[i] == 8) {
+		} else if (blockNum[i] >= 6 || blockNum[i] <= 8) {
 			block.blockType[i] = bad;
 			block.color[i] = BLUE;
 		} else if (blockNum[i] == 9) {
@@ -214,8 +215,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			}*/
 
 			//プレイヤーの位置と半径から四角を計算
-			playerCorners = PosUpdate(player.pos, player.radiusW * 2.0f, player.radiusH * 2.0f);
 			player.pos.x += player.speed;
+			playerCorners = PosUpdate(player.pos, player.radiusW * 2.0f, player.radiusH * 2.0f);
 			for (int i = 0;i < blockMax;i++) {
 				//プレイヤーがブロックに当たっていたらストップする
 				if(!block.isBroken[i]){
@@ -223,7 +224,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 						player.speed = 0.0f;
 						//当たっている状態でマウスのボタンが押されたら掘る
 						if (Novice::IsTriggerMouse(0)) {
-							block.digCounter[i]++;
+							if (block.blockType[i] == normal) {
+								block.digCounter[i]++;
+							}else if(block.blockType[i] == bomb){
+								gameScene = kResult;
+							} else {
+
+							}
 						}
 
 						if (block.digCounter[i] == 3) {
@@ -248,12 +255,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			for (int i = 0;i < blockMax;i++) {
 				if (!block.isBroken[i]) {
 					/*Novice::DrawBox(int(block.pos[i].x - scroll), int(block.pos[i].y), int(block.widgh), int(block.height),0.0f, block.color[i], kFillModeSolid);*/
-					DrawQuad(block.corners[i], whiteGH, 1, 1, block.color[i]);
+					/*DrawQuad(block.corners[i], whiteGH, 1, 1, block.color[i]);*/
+					Novice::DrawBox(
+						int(block.corners[i].leftTop.x - scroll), int(block.corners[i].leftTop.y),
+						int(block.widgh), int(block.height),
+						0.0f, block.color[i], kFillModeSolid
+					);
 				}
 			}
 			/*Novice::DrawEllipse((int)player.pos.x, (int)player.pos.y, int(player.radiusW), int(player.radiusH), 0, player.color, kFillModeSolid);*/
-
-			DrawQuad(playerCorners, whiteGH, 1, 1, player.color);
+			Novice::DrawBox(
+				int(playerCorners.leftTop.x-scroll), int(playerCorners.leftTop.y),
+				int(player.radiusW * 2), int(player.radiusH * 2),
+				0.0f, player.color, kFillModeSolid
+			);
+			/*DrawQuad(playerCorners, whiteGH, 1, 1, player.color);*/
 			
 			//プレイ描画処理ここまで
 
