@@ -124,7 +124,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		;
 
 	//プレイヤーの位置と半径から四角を計算
-	Corners playerCorners = PosUpdate(player.pos, player.radiusW*2.0f, player.radiusH*2.0f);
+	Corners playerCorners = PosUpdate(player.pos, player.radiusW * 2.0f, player.radiusH * 2.0f);
 
 	//ゲームシーンの切り替え
 	enum GameScene {
@@ -197,7 +197,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 			//タイトル描画処理
 
-			
+
 
 			//タイトル描画処理ここまで
 
@@ -222,7 +222,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			playerCorners = PosUpdate(player.pos, player.radiusW * 2.0f, player.radiusH * 2.0f);
 			for (int i = 0;i < blockMax;i++) {
 				//プレイヤーがブロックに当たっていたらストップする
-				if(!block.isBroken[i]){
+				if (!block.isBroken[i]) {
 					if (HitBox(playerCorners, block.corners[i])) {
 						player.speed = 0.0f;
 						//当たっている状態でマウスのボタンが押されたら掘る
@@ -241,32 +241,52 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 								}
 							}
 						} else {
+							//とりあえずダウンしていたら青色にする
 							player.color = BLUE;
 							player.downTimer++;
-							if (player.downTimer>=360) {
+							//6秒立ったら元に戻る
+							if (player.downTimer >= 360) {
 								player.isDown = false;
 							}
 						}
 
+						//badブロックは青色で掘る
 						if (keys[DIK_SPACE] && !preKeys[DIK_SPACE]) {
 							if (!player.isDown) {
 								if (block.blockType[i] == bad) {
 									block.digCounter[i]++;
+									//ボムを掘ったら即死
+								} else if (block.blockType[i] == bomb) {
+									gameScene = kResult;
+								}
+							}
+						}
+
+						if (keys[DIK_B] && !preKeys[DIK_B]) {
+							if (!player.isDown) {
+								if (block.blockType[i] == bomb) {
+									block.digCounter[i]++;
+								} else if (block.blockType[i] == bad) {
+									player.isDown = true;
 								}
 							}
 						}
 
 						if (block.digCounter[i] == 3) {
 							block.isBroken[i] = true;
-							scroll += 100;
+							if (scroll <= 3000) {
+								scroll += 100;
+							}
 						}
 
-						
+
 					} else {
 						player.speed = 5.0f;
 					}
 					break;
-				} 
+				} else {
+					player.speed = 5.0f;
+				}
 			}
 
 			//プレイ更新処理ここまで
@@ -274,9 +294,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			//プレイ描画処理
 			//
 
-			DrawBox({ 0.0f - scroll,0.0f }, 3700.0f, 110.0f, BLACK);
-			DrawBox({ 0.0f - scroll,610.0f }, 3700.0f, 110.0f, BLACK);
-			
+			DrawBox({ 0.0f - scroll,0.0f }, 3750.0f, 110.0f, BLACK);
+			DrawBox({ 0.0f - scroll,610.0f }, 3750.0f, 110.0f, BLACK);
+
 			for (int i = 0;i < blockMax;i++) {
 				if (!block.isBroken[i]) {
 					/*Novice::DrawBox(int(block.pos[i].x - scroll), int(block.pos[i].y), int(block.widgh), int(block.height),0.0f, block.color[i], kFillModeSolid);*/
@@ -290,12 +310,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			}
 			/*Novice::DrawEllipse((int)player.pos.x, (int)player.pos.y, int(player.radiusW), int(player.radiusH), 0, player.color, kFillModeSolid);*/
 			Novice::DrawBox(
-				int(playerCorners.leftTop.x-scroll), int(playerCorners.leftTop.y),
+				int(playerCorners.leftTop.x - scroll), int(playerCorners.leftTop.y),
 				int(player.radiusW * 2), int(player.radiusH * 2),
 				0.0f, player.color, kFillModeSolid
 			);
 			/*DrawQuad(playerCorners, whiteGH, 1, 1, player.color);*/
-			
+
 			//プレイ描画処理ここまで
 
 			break;
