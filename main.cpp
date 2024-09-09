@@ -28,6 +28,8 @@ struct Player {
 	float Rspeed;
 	float speed;
 	unsigned int color;
+	bool isDown;
+	int downTimer;
 };
 
 
@@ -117,6 +119,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		   0xffdab9ff
 	};
 
+	player.isDown = false;
+	player.downTimer = 0
+		;
+
 	//プレイヤーの位置と半径から四角を計算
 	Corners playerCorners = PosUpdate(player.pos, player.radiusW*2.0f, player.radiusH*2.0f);
 
@@ -135,7 +141,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	unsigned int currentTime = unsigned int(time(nullptr));
 	srand(currentTime);
 
-	int whiteGH = Novice::LoadTexture("white1x1.png");
+	/*int whiteGH = Novice::LoadTexture("white1x1.png");*/
 
 	Block block;
 	block.widgh = 100.0f;
@@ -151,10 +157,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		block.corners[i] = PosUpdate(block.pos[i], block.widgh, block.height);
 
 		//0~5が普通、6~8が罠、9が爆弾
-		if (blockNum[i] >= 0 || blockNum[i] <= 5) {
+		if (blockNum[i] >= 0 && blockNum[i] <= 5) {
 			block.blockType[i] = normal;
 			block.color[i] = WHITE;
-		} else if (blockNum[i] >= 6 || blockNum[i] <= 8) {
+		} else if (blockNum[i] >= 6 && blockNum[i] <= 8) {
 			block.blockType[i] = bad;
 			block.color[i] = BLUE;
 		} else if (blockNum[i] == 9) {
@@ -191,10 +197,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 			//タイトル描画処理
 
-			ImGui::Begin("Window");
-			ImGui::Text("blockNum:%d,%d,%d,%d,%d",
-				blockNum[0], blockNum[1], blockNum[2], blockNum[3], blockNum[4]);
-			ImGui::End();
+			
 
 			//タイトル描画処理ここまで
 
@@ -203,9 +206,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		case GameScene::kPlay:
 
 			//プレイ更新処理
-			if (keys[DIK_SPACE] && !preKeys[DIK_SPACE]) {
+			/*if (keys[DIK_SPACE] && !preKeys[DIK_SPACE]) {
 				gameScene = kResult;
-			}
+			}*/
 
 
 			/*if (keys[DIK_RIGHT] && !preKeys[DIK_RIGHT]) {
@@ -223,25 +226,47 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 					if (HitBox(playerCorners, block.corners[i])) {
 						player.speed = 0.0f;
 						//当たっている状態でマウスのボタンが押されたら掘る
-						if (Novice::IsTriggerMouse(0)) {
-							if (block.blockType[i] == normal) {
-								block.digCounter[i]++;
-							}else if(block.blockType[i] == bomb){
-								gameScene = kResult;
-							} else {
+						if (!player.isDown) {
+							player.color = 0xffdab9ff;
+							player.downTimer = 0;
+							if (Novice::IsTriggerMouse(0)) {
+								if (block.blockType[i] == normal) {
+									block.digCounter[i]++;
+									//爆弾なら即死
+								} else if (block.blockType[i] == bomb) {
+									gameScene = kResult;
+									//badならダウンになる(未完成)
+								} else {
+									player.isDown = true;
+								}
+							}
+						} else {
+							player.color = BLUE;
+							player.downTimer++;
+							if (player.downTimer>=360) {
+								player.isDown = false;
+							}
+						}
 
+						if (keys[DIK_SPACE] && !preKeys[DIK_SPACE]) {
+							if (!player.isDown) {
+								if (block.blockType[i] == bad) {
+									block.digCounter[i]++;
+								}
 							}
 						}
 
 						if (block.digCounter[i] == 3) {
 							block.isBroken[i] = true;
-							scroll += 50;
+							scroll += 100;
 						}
+
+						
+					} else {
+						player.speed = 5.0f;
 					}
 					break;
-				} else {
-					player.speed = 5.0f;
-				}
+				} 
 			}
 
 			//プレイ更新処理ここまで
@@ -249,8 +274,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			//プレイ描画処理
 			//
 
-			DrawBox({ 0.0f - scroll,0.0f }, 3280.0f, 110.0f, BLACK);
-			DrawBox({ 0.0f - scroll,610.0f }, 3280.0f, 110.0f, BLACK);
+			DrawBox({ 0.0f - scroll,0.0f }, 3700.0f, 110.0f, BLACK);
+			DrawBox({ 0.0f - scroll,610.0f }, 3700.0f, 110.0f, BLACK);
 			
 			for (int i = 0;i < blockMax;i++) {
 				if (!block.isBroken[i]) {
@@ -286,6 +311,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			currentTime = unsigned int(time(nullptr));
 			srand(currentTime);
 			for (int i = 0;i < blockMax;i++) {
+
+				block.isBroken[i] = false;
+				block.digCounter[i] = false;
 				//乱数でブロックの番号を決める
 				blockNum[i] = rand() % 10;
 
@@ -312,6 +340,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			//result描画処理ここまで
 
 		}
+
+		ImGui::Begin("Window");
+		ImGui::Text("blockNum:%d,%d,%d,%d,%d",
+			blockNum[0], blockNum[1], blockNum[2], blockNum[3], blockNum[4]);
+		ImGui::DragFloat("player.Speed", &player.speed, 0.01f);
+		ImGui::End();
 
 		// フレームの終了
 		Novice::EndFrame();
